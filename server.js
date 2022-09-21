@@ -2,6 +2,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const logger = require('morgan');
+const cors = require('cors');
 // initialize the express app
 const app = express();
 // configuring application settings
@@ -39,6 +40,10 @@ const People = mongoose.model('People', peopleSchema);
 app.use(express.json());
 // ^ this middleware intercepts incoming json request bodies and turns them into req.body
 app.use(logger('dev'));
+
+app.use(cors()); // this sets the access-control-allow-origin to *
+// this means that all domains can request data from this server
+// without getting blocked by the browser
 // mount our routes
 app.get('/', (req, res) => {
     res.send('Welcome to the People Management App');
@@ -101,6 +106,27 @@ app.delete('/api/people/:id', async (req, res) => {
             'error': 'bad request'
         });
     }
+});
+
+
+// Test Route to see how a MERN Stack App works
+app.get('/api/skills', (req, res) => {
+    // fake database    
+    const skills = [
+        {
+            skill: 'JavaScript', 
+            level: 5
+        },
+        {
+            skill: 'HTML', 
+            level: 5
+        },
+        {
+            skill: 'CSS', 
+            level: 5
+        },
+    ];
+    res.status(200).json(skills);
 });
 
 
