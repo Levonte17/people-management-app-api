@@ -10,7 +10,7 @@ const app = express();
 require('dotenv').config();
 
 const {
-    PORT = 4000, DATABASE_URL
+    $PORT = 4000, DATABASE_URL
 } = process.env;
 
 // establish connection to mongodb
