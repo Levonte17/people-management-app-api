@@ -131,6 +131,6 @@ app.get('/api/skills', (req, res) => {
 
 
 // tell the app to listen
-app.listen(PORT, () => {
+app.listen($PORT, () => {
     console.log(`Express is listening on port:${PORT}`);
 });
