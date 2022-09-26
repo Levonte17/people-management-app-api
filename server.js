@@ -3,11 +3,22 @@ const express = require('express');
 const mongoose = require('mongoose');
 const logger = require('morgan');
 const cors = require('cors');
+const admin = require('firebase-admin');
+const { getAuth } = require('firebase-admin/auth');
+
 // initialize the express app
 const app = express();
 // configuring application settings
 
 require('dotenv').config();
+
+
+const serviceAccount = require('./service-account.json');
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount)
+});
+
 
 const {
     $PORT = 4000, DATABASE_URL
@@ -29,6 +40,7 @@ const peopleSchema = new mongoose.Schema({
         default: 'https://cdn.pixabay.com/photo/2016/08/08/09/17/avatar-1577909_1280.png'
     },
     title: String,
+    createdByUserId: String,
 }, {
     timestamps: true
 });
@@ -49,12 +61,41 @@ app.get('/', (req, res) => {
     res.send('Welcome to the People Management App');
 });
 
+// Custom Authentication Middleware
+app.use(async function(req, res, next) {
+    // Capture the token from the request
+    const token = req.get('Authorization');
+    // check to see if we have token
+        // if so, try to validate it using google firebase admin
+    try {
+        if(token) {
+          const user = await getAuth().verifyIdToken(token.replace('Bearer ', ''));
+          req.user = user;
+        } else {
+          req.user = null;
+        }
+    } catch (error) {
+        console.log(error);
+        return res.status(400).json({ error: 'bad request' })
+    }
+    next();
+});
+
+// Custom Authorization Middleware
+function isAuthenticated(req, res, next) {
+    if(!req.user) {
+        res.status(401).json({error: 'you must be logged in first'})
+    } else {
+        next();
+    }
+}
+
 // FULL CRUD ROUTES
 
 // INDEX Route
-app.get('/api/people', async (req, res) => {
+app.get('/api/people', isAuthenticated, async (req, res) => {
     try {
-        res.status(200).json(await People.find({}));
+        res.status(200).json(await People.find({ createdByUserId: req.user.uid }));
     } catch (error) {
         console.log(error);
         res.status(400).json({
@@ -65,8 +106,9 @@ app.get('/api/people', async (req, res) => {
 
 
 // CREATE Route
-app.post('/api/people', async (req, res) => {
+app.post('/api/people', isAuthenticated, async (req, res) => {
     try {
+        req.body.createdByUserId = req.user.uid
         res.status(201).json(await People.create(req.body));
     } catch (error) {
         console.log(error);
