@@ -12,17 +12,27 @@ const app = express();
 
 require('dotenv').config();
 
-
-const serviceAccount = require('./service-account.json');
+const {
+    PORT = 4000, DATABASE_URL, PRIVATE_KEY, PRIVATE_KEY_ID
+} = process.env;
 
 admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount)
+  credential: admin.credential.cert({
+    "type": "service_account",
+    "project_id": "people-management-project",
+    "private_key_id": PRIVATE_KEY_ID,
+    "private_key": PRIVATE_KEY.replace('\n', ''),
+    "client_email": "firebase-adminsdk-suvk7@people-management-project.iam.gserviceaccount.com",
+    "client_id": "113601175547884555720",
+    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+    "token_uri": "https://oauth2.googleapis.com/token",
+    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+    "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-suvk7%40people-management-project.iam.gserviceaccount.com"
+  })
 });
 
 
-const {
-    $PORT = 4000, DATABASE_URL
-} = process.env;
+
 
 // establish connection to mongodb
 mongoose.connect(DATABASE_URL);
@@ -173,6 +183,6 @@ app.get('/api/skills', (req, res) => {
 
 
 // tell the app to listen
-app.listen($PORT, () => {
-    console.log(`Express is listening on port:${$PORT}`);
+app.listen(PORT, () => {
+    console.log(`Express is listening on port:${PORT}`);
 });
